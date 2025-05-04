@@ -56,28 +56,34 @@ TickTwo tickEEP(writeEEP, eepRefresh);
 TickTwo tickbtSendStatus(btSendStatus, btRefresh);
 
 void setup() {
+  initLCD();   // begin LCD
+  delay(500);  // let complete
+
 #if stateDebug
   Serial.begin(serialBaud);  // begin Serial talkback
 #endif
-  // Set Pin Modes (only needed for BT reset - Serial/LCD/rotary are all handled in their respective modules)
-  pinMode(pinBT_Reset, INPUT);
-  pinMode(pinBT_Conf, OUTPUT);
-  digitalWrite(pinBT_Conf, LOW);
-  delay(btTimeout);
-  
-  // begin BT module Serial comms and wait until available
-  Serial1.begin(baudBT, SERIAL_8N1, pinBluetoothRX, pinBluetoothTX);
-  delay(1000);
 #if stateDebug
   Serial.println(F("OpenHaldex T4 Screen Initialising..."));  // Serial message for init
 #endif
 
   readEEP();  // read the EEPROM for previous states
-  initLCD();  // begin LCD
 
   if (showSplash) {
     displaySplash();  // allows time for auto-pair
   }
+
+  // Set Pin Modes (only needed for BT reset - Serial/LCD/rotary are all handled in their respective modules)
+  //reset bluetooth module to ensure basic mode
+  digitalWrite(pinBT_Conf, LOW);
+  digitalWrite(pinBT_Reset, LOW);
+  pinMode(pinBT_Conf, OUTPUT);
+  pinMode(pinBT_Reset, OUTPUT);
+  delay(3000);
+  pinMode(pinBT_Reset, INPUT);
+
+  // begin BT module Serial comms and wait until available
+  Serial1.begin(baudBT, SERIAL_8N1, pinBluetoothRX, pinBluetoothTX);
+  delay(1000);
 
 #if stateDebug
   Serial.println(F("OpenHaldex T4 Screen Initialised..."));
@@ -114,7 +120,7 @@ void loop() {
     requestPair = false;
   }
 
-  if (Serial1.available()) {  // if anything comes in Bluetooth Serial
+  while (Serial1.available() && !ignoreSerialBT) {  // if anything comes in Bluetooth Serial
 #if stateDebug
     Serial.println(F("Got serial data..."));
 #endif
@@ -123,7 +129,7 @@ void loop() {
 #if stateDebug
     Serial.println(incomingLen);
 #endif
-    if (incomingLen < 10) {
+    if (incomingLen < 9) {
       runOnce = false;
     }
     btReceiveStatus();

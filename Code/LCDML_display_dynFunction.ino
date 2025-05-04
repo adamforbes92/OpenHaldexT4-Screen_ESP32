@@ -14,6 +14,7 @@ void mDyn_mode(uint8_t line)
     //check Button
     if (LCDML.BT_checkAny()) {
       if (LCDML.BT_checkEnter()) {
+        ignoreSerialBT = false;
         // this function checks returns the scroll disable status (0 = menu scrolling enabled, 1 = menu scrolling disabled)
         if (LCDML.MENU_getScrollDisableStatus() == 0) {
           // disable the menu scroll function to catch the cursor on this point
@@ -31,6 +32,7 @@ void mDyn_mode(uint8_t line)
 
       // This check have only an effect when MENU_disScroll is set
       if (LCDML.BT_checkUp()) {
+        ignoreSerialBT = true;
         lastMode += 1;
         if (lastMode > 2) {
           if (isStandalone) {
@@ -43,6 +45,7 @@ void mDyn_mode(uint8_t line)
 
       // This check have only an effect when MENU_disScroll is set
       if (LCDML.BT_checkDown()) {
+        ignoreSerialBT = true;
         lastMode -= 1;
         if (isStandalone) {
           if (lastMode < 1) {
@@ -111,9 +114,10 @@ void mDyn_isPaired(uint8_t line)
         // do something
         // ...
         if (!btConnected) {
-          LCDML.MENU_enScroll();
-          btInit();
+          //LCDML.MENU_enScroll();
+          //btInit();
         }
+        btInit();
       }
 
       // This check have only an effect when MENU_disScroll is set
@@ -380,7 +384,7 @@ void mDyn_req(uint8_t line)
 
 
   char buf[20];
-  sprintf(buf, "Req %: %d", lockTarget);
+  sprintf(buf, "Req %: %d", (lockTarget * 100 / 72));
 
   // use the line from function parameters
   lcd.setCursor(1, line);

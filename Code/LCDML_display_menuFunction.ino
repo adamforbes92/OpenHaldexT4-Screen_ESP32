@@ -38,6 +38,10 @@ void mFunc_screensaver(uint8_t param)
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
+    LCDML.FUNC_setLoopInterval(100);  // starts a trigger event for the loop function every 100 milliseconds
+  }
+
+  if (LCDML.FUNC_loop()) {
     // update LCD content
     char buf[20];
     char buf1[20];
@@ -67,10 +71,7 @@ void mFunc_screensaver(uint8_t param)
     lcd.print(buf1);
     lcd.setCursor(0, 1);
     lcd.print(buf);
-    LCDML.FUNC_setLoopInterval(100);  // starts a trigger event for the loop function every 100 milliseconds
-  }
-
-  if (LCDML.FUNC_loop()) {
+    
     if (LCDML.BT_checkAny())  // check if any button is pressed (enter, up, down, left, right)
     {
       LCDML.FUNC_goBackToMenu();  // leave this function

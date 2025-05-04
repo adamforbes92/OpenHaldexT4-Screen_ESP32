@@ -1,13 +1,13 @@
 #pragma once
 
-#define baudBT 9600                  // Bluetooth Baud Rate (default is 9800)
+#define baudBT 19200                 // Bluetooth Baud Rate (default is 9600)
 #define baudAT 38400                 // Bluetooth AT Baud Rate (once reset, is 38400)
 #define serialBaud 115200            // for Serial/USB comms
 #define btTimeout 3000               // Bluetooth timeout
 #define btDelay 500                  // Bluetooth delay
-#define stateDebug 0                 // if 1, will Serial print
+#define stateDebug 1                 // if 1, will Serial print
 
-#define pinBT_Conf 9                 // 'button' for BT config - some ESP32 C3's don't like using this pin - revise board to remove pulldown...
+#define pinBT_Conf 2                 // 'button' for BT config - some ESP32 C3's don't like using this pin - revise board to remove pulldown...
 #define pinBT_Reset 3                // 'button' for BT reset
 #define pinBluetoothRX 21            // Serial RX for BT module
 #define pinBluetoothTX 20            // Serial TX for BT module
@@ -39,7 +39,7 @@
 #define pairingBT "Begin pairing..."
 #define strBTConnected1 "Pairing"
 #define strBTConnected2 "Successful!"
-#define OpenHaldexT4 "OpenHaldexT4"
+const char* OpenHaldexT4 = "OpenHaldexT4";
 
 // Libary Definitions
 /* Functions */
@@ -86,13 +86,14 @@ extern bool runOnce = false;
 extern bool requestPair = false;
 extern bool showSplash = true;
 extern bool showScreensaver = true;
+extern bool ignoreSerialBT = false;
 
 /* for menu */
 extern boolean g_status_if_dyn_content_external_refresh_is_displayed = false;
 extern unsigned long g_timer_1000ms = 0;
 
 /* current software version */
-extern int screenSoftwareVersion = 203;
+extern int screenSoftwareVersion = 303;
 extern int boardSoftwareVersion = 0;
 
 /* bluetooth serial data */

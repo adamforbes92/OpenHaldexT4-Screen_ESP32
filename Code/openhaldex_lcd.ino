@@ -41,6 +41,8 @@ void displayAbout() {
   lcd.print(boardVer);
   lcd.setCursor(0, 1);
   lcd.print(bufBoard);
+
+  LCDML.MENU_goRoot();
 }
 
 void displaySplash() {

@@ -2,7 +2,7 @@
 #include "openhaldex.h"
 
 String atCommands[12] = { "AT",
-                          "AT+UART=9600,0,0",
+                          "AT+UART=19200,0,0",
                           "AT+NAME=OpenHaldexScreen",
                           "AT+ROLE=1",
                           "AT+CMODE=0",
@@ -16,11 +16,11 @@ String atCommands[12] = { "AT",
 char assembledAddr[50];
 
 bool btInit() {
-  char *p;
-  char *header;
-  char *addr1;
-  char *addr2;
-  char *addr3;
+  char *p = NULL;
+  char *header = NULL;
+  char *addr1 = NULL;
+  char *addr2 = NULL;
+  char *addr3 = NULL;
 
 #if stateDebug
   Serial.println(F("Beginning pairing..."));
@@ -38,11 +38,12 @@ bool btInit() {
       LCDML.SCREEN_disable();
     }
 
-    pinMode(pinBT_Reset, OUTPUT);
     digitalWrite(pinBT_Reset, LOW);
-
-    pinMode(pinBT_Conf, OUTPUT);
     digitalWrite(pinBT_Conf, HIGH);
+
+    pinMode(pinBT_Reset, OUTPUT);
+    pinMode(pinBT_Conf, OUTPUT);
+
     delay(btTimeout);
     pinMode(pinBT_Reset, INPUT);
 
@@ -62,8 +63,71 @@ bool btInit() {
     lcd.print(atCommands[i]);
 
     // write command to Serial1 (BT Module)
-    if (i == 9 || i == 10) {
-      if (i == 9) {
+    if (i == 8 || i == 9 || i == 10) {
+      // special case (once INQ), capture all addresses & parse until OpenHaldex found
+      if (i == 8) {
+#if stateDebug
+        Serial.println(atCommands[i]);
+#endif
+        Serial1.setTimeout(btTimeout * 2.6);
+        Serial1.println(atCommands[i]);
+        int readByteCount = 0;
+        while (!p) {
+          readByteCount = Serial1.readBytesUntil('OK\n', at_buf, arraySize(at_buf));
+#if stateDebug
+          Serial.println(at_buf);
+          Serial.println(readByteCount);
+#endif
+          if (readByteCount > 1) {
+            p = strstr(at_buf, OpenHaldexT4);
+          }
+
+          at_buf[readByteCount] = '\0';
+        }
+
+        // if found 'OpenHaldex T4' in returned address, break down for address numbers (AT returns :, wants it fed back as ",")
+        if (p) {
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Found: ");
+          lcd.setCursor(0, 1);
+          lcd.print(OpenHaldexT4);
+          while (Serial1.available()) Serial1.read();  // Clear out what remains.
+
+#if stateDebug
+          Serial.print("Found: ");
+          Serial.print(OpenHaldexT4);
+#endif
+          addr1 = strtok(at_buf, ":,\r");
+          addr1 = strtok(NULL, ":,\r");  // Parses second CSV from SIM808 response (GPS fix value)
+          addr2 = strtok(NULL, ":,\r");
+          addr3 = strtok(NULL, ":,\r");
+
+#if stateDebug
+          Serial.print(addr1);
+          Serial.print(addr2);
+          Serial.print(addr3);
+#endif
+
+          btConnected = true;
+        }
+
+        if (!btConnected) {
+#if stateDebug
+          Serial.print("Could not find ");
+          Serial.print(OpenHaldexT4);
+          Serial.print("");
+#endif
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Could not find");
+          lcd.setCursor(0, 1);
+          lcd.print(OpenHaldexT4);
+          break;
+        }
+      }
+
+      if (i == 9 && btConnected) {
         sprintf(assembledAddr, "AT+BIND=%s,%s,%s", addr1, addr2, addr3);
 #if stateDebug
         Serial.println(assembledAddr);
@@ -71,7 +135,7 @@ bool btInit() {
         Serial1.println(assembledAddr);
       }
 
-      if (i == 10) {
+      if (i == 10 && btConnected) {
         sprintf(assembledAddr, "AT+LINK=%s,%s,%s", addr1, addr2, addr3);
 #if stateDebug
         Serial.println(assembledAddr);
@@ -83,70 +147,20 @@ bool btInit() {
       Serial.println(atCommands[i]);
 #endif
       Serial1.println(atCommands[i]);
-    }
-
-    while (!Serial1.available()) {}
-    Serial1.readBytesUntil('OK\n', at_buf, arraySize(at_buf));
-
-    // print response to BT Module to screen
-    lcd.setCursor(0, 1);
-    lcd.print(at_buf);
-
-    // special case (once INQ), capture all addresses & parse until OpenHaldex found
-    if (i == 8) {
-      uint16_t sDelay = btTimeout * 2.8;
-
-      Serial1.setTimeout(sDelay);
-      int readByteCount = 0;
-      readByteCount = Serial1.readBytesUntil('\n', at_buf, arraySize(at_buf));
-      at_buf[readByteCount + 1] = '\0';
-
-      // if found 'OpenHaldex T4' in returned address, break down for address numbers (AT returns :, wants it fed back as ",")
-      p = strstr(at_buf, OpenHaldexT4);
-
-      if (p) {
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Found: ");
-        lcd.setCursor(0, 1);
-        lcd.print(OpenHaldexT4);
-        while (Serial1.available()) Serial1.read();  // Clear out what remains.
-
+      while (!Serial1.available()) {}
+      Serial1.readBytesUntil('OK\n', at_buf, arraySize(at_buf));
+      // print response to BT Module to screen
+      lcd.setCursor(0, 1);
+      lcd.print(at_buf);
 #if stateDebug
-        Serial.print("Found: ");
-        Serial.print(OpenHaldexT4);
+      Serial.println(at_buf);
 #endif
-        addr1 = strtok(at_buf, ":,\r");
-        addr1 = strtok(NULL, ":,\r");  // Parses second CSV from SIM808 response (GPS fix value)
-        addr2 = strtok(NULL, ":,\r");
-        addr3 = strtok(NULL, ":,\r");
-
-        btConnected = true;
-      }
-#if stateDebug
-      Serial.print(addr1);
-      Serial.print(addr2);
-      Serial.print(addr3);
-#endif
-
-      if (!btConnected) {
-        break;
-#if stateDebug
-        Serial.print("Could not find ");
-        Serial.print(OpenHaldexT4);
-        Serial.print("");
-#endif
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Could not find");
-        lcd.setCursor(0, 1);
-        lcd.print(OpenHaldexT4);
-      }
     }
   }
 
   if (!btConnected) {
     // display actioned command
+    at_buf[0] = '\0';
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(atCommands[11]);
@@ -162,8 +176,8 @@ bool btInit() {
   }
 
   pinMode(pinBT_Reset, INPUT);
-  pinMode(pinBT_Conf, OUTPUT);
   digitalWrite(pinBT_Conf, LOW);
+  pinMode(pinBT_Conf, OUTPUT);
   delay(btTimeout);
 
 #if stateDebug
@@ -230,6 +244,7 @@ void btReceiveStatus() {
     Serial.print("State.mode_override: ");
     Serial.println(btIncoming[5]);
     Serial.print("State.mode: ");
+    Serial.println(btIncoming[6]);
     Serial.print("SERIAL_PACKET_END: ");
     Serial.println(btIncoming[9]);
 #endif
