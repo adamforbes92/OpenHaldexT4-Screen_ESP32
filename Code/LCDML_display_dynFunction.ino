@@ -34,7 +34,7 @@ void mDyn_mode(uint8_t line)
       if (LCDML.BT_checkUp()) {
         ignoreSerialBT = true;
         lastMode += 1;
-        if (lastMode > 2) {
+        if (lastMode > 3) {
           if (isStandalone) {
             lastMode = 1;
           } else {
@@ -49,11 +49,11 @@ void mDyn_mode(uint8_t line)
         lastMode -= 1;
         if (isStandalone) {
           if (lastMode < 1) {
-            lastMode = 2;
+            lastMode = 3;
           }
         } else {
           if (lastMode < 0) {
-            lastMode = 2;
+            lastMode = 3;
           }
         }
       }
@@ -78,6 +78,10 @@ void mDyn_mode(uint8_t line)
     case 2:
       state.mode = MODE_5050;
       sprintf(buf, "Mode: 5050");
+      break;
+    case 3:
+      state.mode = MODE_7525;
+      sprintf(buf, "Mode: 7525");
       break;
     default:
       sprintf(buf, "Error!");

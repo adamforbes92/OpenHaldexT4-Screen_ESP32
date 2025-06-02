@@ -59,7 +59,8 @@ typedef enum openhaldex_mode_id {
   MODE_STOCK,
   MODE_FWD,
   MODE_5050,
-  MODE_CUSTOM
+  MODE_7525,
+  MODE_CUSTOM,
 } openhaldex_mode_id;
 
 typedef struct openhaldexState {
@@ -93,7 +94,7 @@ extern boolean g_status_if_dyn_content_external_refresh_is_displayed = false;
 extern unsigned long g_timer_1000ms = 0;
 
 /* current software version */
-extern int screenSoftwareVersion = 303;
+extern int screenSoftwareVersion = 205;
 extern int boardSoftwareVersion = 0;
 
 /* bluetooth serial data */

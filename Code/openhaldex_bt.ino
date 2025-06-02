@@ -8,7 +8,7 @@ String atCommands[12] = { "AT",
                           "AT+CMODE=0",
                           "AT+CLASS=0",
                           "AT+RMAAD",
-                          "AT+INQM=0,4,4",
+                          "AT+INQM=0,8,20",
                           "AT+INQ",
                           "AT+BIND=",
                           "AT+LINK=",
@@ -71,6 +71,8 @@ bool btInit() {
 #endif
         Serial1.setTimeout(btTimeout * 2.6);
         Serial1.println(atCommands[i]);
+        while (!Serial1.available()) {}
+
         int readByteCount = 0;
         while (!p) {
           readByteCount = Serial1.readBytesUntil('OK\n', at_buf, arraySize(at_buf));
@@ -82,7 +84,7 @@ bool btInit() {
             p = strstr(at_buf, OpenHaldexT4);
           }
 
-          at_buf[readByteCount] = '\0';
+          //at_buf[readByteCount] = '\0';
         }
 
         // if found 'OpenHaldex T4' in returned address, break down for address numbers (AT returns :, wants it fed back as ",")
@@ -148,7 +150,7 @@ bool btInit() {
 #endif
       Serial1.println(atCommands[i]);
       while (!Serial1.available()) {}
-      Serial1.readBytesUntil('OK\n', at_buf, arraySize(at_buf));
+      Serial1.readBytesUntil('\n', at_buf, arraySize(at_buf));
       // print response to BT Module to screen
       lcd.setCursor(0, 1);
       lcd.print(at_buf);
